@@ -1,0 +1,1280 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>段ボール仕分けシールメーカー β</title>
+  <style>
+:root {
+  --bg: #f6f0e7;
+  --panel: rgba(255, 252, 247, 0.92);
+  --panel-border: rgba(115, 96, 74, 0.18);
+  --ink: #2d241a;
+  --muted: #77695b;
+  --accent: #cc5f2f;
+  --accent-strong: #a2441b;
+  --shadow: 0 24px 50px rgba(73, 51, 29, 0.12);
+  --sheet-shadow: 0 24px 60px rgba(44, 30, 18, 0.16);
+  --sheet-width: min(100%, 620px);
+  --preview-scale: 1;
+  --label-width-mm: 86.4mm;
+  --label-height-mm: 50.8mm;
+  --gap-x-mm: 0mm;
+  --gap-y-mm: 0mm;
+  --margin-top-mm: 21.2mm;
+  --margin-side-mm: 18.6mm;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: "Yu Gothic UI", "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif;
+  color: var(--ink);
+  background:
+    radial-gradient(circle at top left, rgba(255, 220, 184, 0.9), transparent 32%),
+    linear-gradient(160deg, #fbf7f0 0%, #f1e6d6 42%, #efe7dc 100%);
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+.app-shell {
+  width: min(1200px, calc(100% - 32px));
+  margin: 24px auto 40px;
+}
+
+.hero {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  align-items: flex-end;
+  padding: 28px 32px;
+  border-radius: 28px;
+  background: linear-gradient(135deg, rgba(102, 69, 32, 0.96), rgba(150, 79, 37, 0.92));
+  color: #fff8f0;
+  box-shadow: var(--shadow);
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  font-size: 0.85rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  opacity: 0.78;
+}
+
+.hero h1 {
+  margin: 0;
+  font-size: clamp(1.9rem, 3vw, 2.8rem);
+  line-height: 1.15;
+}
+
+.hero-copy {
+  max-width: 58ch;
+  margin: 14px 0 0;
+  font-size: 1rem;
+  line-height: 1.7;
+  opacity: 0.92;
+}
+
+.hero-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: stretch;
+}
+
+.action-note {
+  margin: -4px 0 0;
+  font-size: 0.88rem;
+  color: rgba(255, 248, 240, 0.9);
+  text-align: center;
+}
+
+.workspace {
+  display: grid;
+  grid-template-columns: minmax(320px, 420px) minmax(0, 1fr);
+  gap: 22px;
+  margin-top: 22px;
+}
+
+.panel {
+  border: 1px solid var(--panel-border);
+  border-radius: 28px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(10px);
+}
+
+.controls {
+  padding: 24px;
+}
+
+.preview-panel {
+  padding: 24px;
+  overflow: hidden;
+}
+
+.panel-header h2 {
+  margin: 0;
+  font-size: 1.45rem;
+}
+
+.panel-header p {
+  margin: 10px 0 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.control-form {
+  display: grid;
+  gap: 18px;
+  margin-top: 24px;
+}
+
+.field {
+  display: grid;
+  gap: 8px;
+}
+
+.field > span {
+  font-size: 0.98rem;
+  font-weight: 700;
+}
+
+.field input[type="text"],
+.field input[type="number"],
+.field select {
+  width: 100%;
+  min-height: 54px;
+  padding: 12px 16px;
+  border: 1px solid rgba(101, 81, 57, 0.18);
+  border-radius: 16px;
+  background: #fffdf9;
+  color: var(--ink);
+}
+
+.field input:focus,
+.field select:focus {
+  outline: 3px solid rgba(204, 95, 47, 0.2);
+  border-color: rgba(204, 95, 47, 0.56);
+}
+
+.two-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.border-field {
+  gap: 10px;
+}
+
+.toggle-buttons {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.toggle-button {
+  min-height: 54px;
+  padding: 12px 16px;
+  border: 2px solid rgba(101, 81, 57, 0.18);
+  border-radius: 16px;
+  background: #fffdf9;
+  color: var(--ink);
+  font-weight: 800;
+}
+
+.toggle-button.is-selected {
+  border-color: rgba(204, 95, 47, 0.72);
+  background: linear-gradient(180deg, #fff4e7, #ffd9b0);
+  color: #6a3215;
+  box-shadow: 0 12px 24px rgba(204, 95, 47, 0.14);
+}
+
+.color-options {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.color-chip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  border: 2px solid transparent;
+  border-radius: 18px;
+  background: #fffdf9;
+  cursor: pointer;
+  transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+}
+
+.color-chip:hover {
+  transform: translateY(-1px);
+}
+
+.color-chip.is-selected {
+  border-color: rgba(204, 95, 47, 0.72);
+  box-shadow: 0 12px 28px rgba(204, 95, 47, 0.12);
+}
+
+.chip-swatch {
+  inline-size: 28px;
+  block-size: 28px;
+  border-radius: 999px;
+  border: 1px solid rgba(80, 66, 47, 0.12);
+}
+
+.shortcut-box {
+  padding: 18px;
+  border-radius: 22px;
+  background: linear-gradient(180deg, rgba(252, 247, 239, 0.96), rgba(245, 238, 228, 0.92));
+}
+
+.shortcut-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.shortcut-header h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.shortcut-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.shortcut-button,
+.subtle-button,
+.primary-button,
+.clear-text-button {
+  border: 0;
+  cursor: pointer;
+  transition: transform 0.16s ease, opacity 0.16s ease, box-shadow 0.16s ease;
+}
+
+.shortcut-button:hover,
+.subtle-button:hover,
+.primary-button:hover,
+.clear-text-button:hover {
+  transform: translateY(-1px);
+}
+
+.shortcut-button {
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: #fff;
+  color: var(--ink);
+  box-shadow: 0 10px 22px rgba(44, 30, 18, 0.08);
+}
+
+.subtle-button {
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: rgba(109, 92, 75, 0.1);
+  color: var(--ink);
+}
+
+.clear-text-button {
+  min-height: 50px;
+  padding: 10px 16px;
+  border-radius: 16px;
+  background: linear-gradient(180deg, #f2c8b1, #e8b496);
+  color: #6b3c22;
+  font-weight: 800;
+  text-align: center;
+  box-shadow: 0 10px 20px rgba(119, 66, 27, 0.12);
+}
+
+.primary-button {
+  min-width: 280px;
+  min-height: 78px;
+  padding: 18px 28px;
+  border-radius: 22px;
+  background: linear-gradient(180deg, #fff3e6, #ffc985);
+  color: #4c220a;
+  font-weight: 800;
+  font-size: 1.18rem;
+  letter-spacing: 0.02em;
+  box-shadow: 0 22px 34px rgba(82, 37, 10, 0.22);
+}
+
+.preview-note {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 14px;
+  align-items: center;
+  margin-top: 18px;
+  color: var(--muted);
+}
+
+.paper-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(204, 95, 47, 0.12);
+  color: var(--accent-strong);
+  font-weight: 700;
+}
+
+.sheet-frame {
+  margin-top: 20px;
+  padding: 18px;
+  border-radius: 24px;
+  background:
+    linear-gradient(180deg, rgba(116, 95, 74, 0.12), rgba(255, 255, 255, 0)),
+    rgba(238, 231, 223, 0.72);
+}
+
+.screen-preview {
+  display: flex;
+  justify-content: center;
+}
+
+.sheet {
+  position: relative;
+  inline-size: 210mm;
+  block-size: 297mm;
+  background: #fff;
+  box-shadow: var(--sheet-shadow);
+  overflow: hidden;
+}
+
+.screen-preview .sheet {
+  width: var(--sheet-width);
+  height: auto;
+  aspect-ratio: 210 / 297;
+}
+
+.canvas-sheet canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.label-grid {
+  position: absolute;
+  top: var(--margin-top-mm);
+  left: var(--margin-side-mm);
+  display: grid;
+  grid-template-columns: repeat(2, var(--label-width-mm));
+  grid-template-rows: repeat(5, var(--label-height-mm));
+  gap: var(--gap-y-mm) var(--gap-x-mm);
+}
+
+.screen-preview .label-grid {
+  inset: calc(100% * 21.2 / 297) auto auto calc(100% * 18.6 / 210);
+  width: calc(100% * 172.8 / 210);
+  height: calc(100% * 254 / 297);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: repeat(5, minmax(0, 1fr));
+}
+
+.label-card {
+  position: relative;
+  display: grid;
+  place-items: center;
+  padding: 6mm;
+  border-radius: 3mm;
+  text-align: center;
+  overflow: hidden;
+  print-color-adjust: exact;
+  -webkit-print-color-adjust: exact;
+}
+
+.label-card.is-plain-paper {
+  background-image:
+    linear-gradient(45deg, rgba(93, 76, 58, 0.06) 25%, transparent 25%),
+    linear-gradient(-45deg, rgba(93, 76, 58, 0.06) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, rgba(93, 76, 58, 0.06) 75%),
+    linear-gradient(-45deg, transparent 75%, rgba(93, 76, 58, 0.06) 75%);
+  background-size: 14px 14px;
+  background-position: 0 0, 0 7px, 7px -7px, -7px 0;
+}
+
+.label-card.has-border {
+  border: 1.2mm solid rgba(42, 34, 23, 0.75);
+}
+
+.label-copy {
+  width: 100%;
+  display: grid;
+  gap: 3mm;
+  place-items: center;
+  color: #1f1a13;
+  line-height: 1.15;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+.line-one,
+.line-two,
+.line-three {
+  display: block;
+  width: 100%;
+}
+
+.font-large .line-one {
+  font-size: 16pt;
+  font-weight: 900;
+}
+
+.font-large .line-two {
+  font-size: 14.5pt;
+  font-weight: 850;
+}
+
+.font-large .line-three {
+  font-size: 10pt;
+  font-weight: 800;
+}
+
+.font-medium .line-one {
+  font-size: 14pt;
+  font-weight: 900;
+}
+
+.font-medium .line-two {
+  font-size: 12.6pt;
+  font-weight: 850;
+}
+
+.font-medium .line-three {
+  font-size: 9.5pt;
+  font-weight: 800;
+}
+
+.font-small .line-one {
+  font-size: 12.4pt;
+  font-weight: 900;
+}
+
+.font-small .line-two {
+  font-size: 11.1pt;
+  font-weight: 850;
+}
+
+.font-small .line-three {
+  font-size: 8.5pt;
+  font-weight: 800;
+}
+
+.line-three {
+  letter-spacing: 0.08em;
+}
+
+.label-fallback {
+  color: rgba(70, 60, 48, 0.34);
+  font-weight: 700;
+}
+
+.page-watermark {
+  position: absolute;
+  inset: auto 10mm 8mm auto;
+  font-size: 8pt;
+  color: rgba(80, 66, 47, 0.5);
+}
+
+.print-pages {
+  display: none;
+}
+
+@media (max-width: 960px) {
+  .app-shell {
+    width: min(100% - 20px, 1200px);
+    margin-top: 16px;
+  }
+
+  .hero,
+  .workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .hero {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .primary-button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 640px) {
+  .controls,
+  .preview-panel {
+    padding: 18px;
+  }
+
+  .two-columns,
+  .color-options {
+    grid-template-columns: 1fr;
+  }
+
+  .sheet-frame {
+    padding: 10px;
+  }
+}
+
+@page {
+  size: A4 portrait;
+  margin: 0;
+}
+
+@media print {
+  body {
+    background: #fff;
+  }
+
+  .app-shell {
+    display: none;
+  }
+
+  .print-pages {
+    display: block;
+  }
+
+  .print-pages .sheet {
+    box-shadow: none;
+    page-break-after: always;
+  }
+
+  .print-pages .sheet:last-child {
+    page-break-after: auto;
+  }
+}
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="hero">
+      <div>
+        <p class="eyebrow">現場向け / 1画面完結</p>
+        <h1>段ボール仕分けシールメーカー β</h1>
+        <p class="hero-copy">
+          手書きの代わりに、大きく見やすい仕分けシールをすぐ作れるようにしたよ。
+          A-ONE 品番 78210 の10面ラベルと、普通紙テスト印刷に対応しているよ。
+        </p>
+      </div>
+      <div class="hero-actions">
+        <button id="pdfButton" class="primary-button" type="button">PDFを書き出す</button>
+        <p class="action-note">A4サイズのPDFを開けるよ</p>
+      </div>
+    </header>
+
+    <main class="workspace">
+      <section class="panel controls" aria-labelledby="controls-title">
+        <div class="panel-header">
+          <h2 id="controls-title">入力</h2>
+          <p>迷わないように、必要な項目だけに絞っているよ。</p>
+        </div>
+
+        <form id="labelForm" class="control-form">
+          <label class="field">
+            <span>1行目</span>
+            <input id="line1" name="line1" type="text" maxlength="16" placeholder="品名を入力">
+          </label>
+
+          <label class="field">
+            <span>2行目</span>
+            <input id="line2" name="line2" type="text" maxlength="16" placeholder="補足を入力">
+          </label>
+
+          <label class="field">
+            <span>3行目</span>
+            <input id="line3" name="line3" type="text" maxlength="20" placeholder="バーコード番号を入力">
+          </label>
+
+          <button id="clearButton" class="clear-text-button" type="button">リセット</button>
+
+          <div class="field">
+            <span>背景色</span>
+            <div id="colorOptions" class="color-options" role="radiogroup" aria-label="背景色"></div>
+          </div>
+
+          <div class="two-columns">
+            <label class="field">
+              <span>枚数</span>
+              <input id="quantity" name="quantity" type="number" min="1" max="100" step="1" value="10" inputmode="numeric">
+            </label>
+
+            <label class="field">
+              <span>文字サイズ</span>
+              <select id="fontSize" name="fontSize">
+                <option value="large" selected>大</option>
+                <option value="medium">中</option>
+                <option value="small">小</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="two-columns">
+            <label class="field">
+              <span>用紙タイプ</span>
+              <select id="paperType" name="paperType">
+                <option value="aone" selected>A-ONE 78210 10面ラベル</option>
+                <option value="plain">普通紙テスト印刷</option>
+              </select>
+            </label>
+
+            <div class="field border-field">
+              <span>枠線</span>
+              <input id="borderEnabled" name="borderEnabled" type="checkbox" checked hidden>
+              <div class="toggle-buttons" role="group" aria-label="枠線のありなし">
+                <button id="borderOnButton" class="toggle-button is-selected" type="button" aria-pressed="true">あり</button>
+                <button id="borderOffButton" class="toggle-button" type="button" aria-pressed="false">なし</button>
+              </div>
+            </div>
+          </div>
+
+          <section class="shortcut-box" aria-labelledby="shortcut-title">
+            <div class="shortcut-header">
+              <h3 id="shortcut-title">よく使う文言</h3>
+            </div>
+            <div id="shortcutButtons" class="shortcut-buttons"></div>
+          </section>
+        </form>
+      </section>
+
+      <section class="panel preview-panel" aria-labelledby="preview-title">
+        <div class="panel-header">
+          <h2 id="preview-title">プレビュー</h2>
+          <p id="pageSummary">10枚まで1ページに自動整列するよ。</p>
+        </div>
+
+        <div class="preview-note">
+          <span id="paperBadge" class="paper-badge">A-ONE 78210 10面ラベル</span>
+          <span id="assistText">PDFを書き出して、そのまま保存できるよ。</span>
+        </div>
+
+        <div class="sheet-frame">
+          <div id="screenPreview" class="screen-preview"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <section id="printPages" class="print-pages" aria-hidden="true"></section>
+  <script>
+const COLORS = [
+  { id: "cream", name: "クリーム", value: "#fff5cc" },
+  { id: "sky", name: "空色", value: "#dff4ff" },
+  { id: "mint", name: "ミント", value: "#daf7e8" },
+  { id: "peach", name: "ピーチ", value: "#ffe2d2" },
+  { id: "rose", name: "ローズ", value: "#ffd7de" },
+  { id: "gray", name: "グレー", value: "#ece7df" }
+];
+
+const SHORTCUTS = [
+  ["衣類", "春物", ""],
+  ["キッチン", "割れ物注意", ""],
+  ["文房具", "よく使う", ""],
+  ["本", "重いので注意", ""],
+  ["工具", "開封注意", ""],
+  ["配送", "午前着", ""]
+];
+
+const MAX_LABELS_PER_PAGE = 10;
+const PDF_RENDER_DPI = 300;
+const PDF_IMAGE_QUALITY = 0.98;
+
+const state = {
+  selectedColorId: COLORS[0].id
+};
+
+const form = document.getElementById("labelForm");
+const line1Input = document.getElementById("line1");
+const line2Input = document.getElementById("line2");
+const line3Input = document.getElementById("line3");
+const quantityInput = document.getElementById("quantity");
+const fontSizeInput = document.getElementById("fontSize");
+const paperTypeInput = document.getElementById("paperType");
+const borderEnabledInput = document.getElementById("borderEnabled");
+const borderOnButton = document.getElementById("borderOnButton");
+const borderOffButton = document.getElementById("borderOffButton");
+const colorOptions = document.getElementById("colorOptions");
+const shortcutButtons = document.getElementById("shortcutButtons");
+const clearButton = document.getElementById("clearButton");
+const pdfButton = document.getElementById("pdfButton");
+const screenPreview = document.getElementById("screenPreview");
+const printPages = document.getElementById("printPages");
+const pageSummary = document.getElementById("pageSummary");
+const paperBadge = document.getElementById("paperBadge");
+const assistText = document.getElementById("assistText");
+
+function init() {
+  renderColorOptions();
+  renderShortcutButtons();
+  form.addEventListener("input", handleFormChange);
+  form.addEventListener("change", handleFormChange);
+  window.addEventListener("beforeprint", handleBeforePrint);
+  window.addEventListener("afterprint", handleAfterPrint);
+  clearButton.addEventListener("click", handleClear);
+  pdfButton.addEventListener("click", handlePdfExport);
+  borderOnButton.addEventListener("click", () => setBorderEnabled(true));
+  borderOffButton.addEventListener("click", () => setBorderEnabled(false));
+  syncBorderButtons();
+  render();
+}
+
+function renderColorOptions() {
+  colorOptions.innerHTML = "";
+
+  COLORS.forEach((color) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "color-chip";
+    button.setAttribute("role", "radio");
+    button.dataset.colorId = color.id;
+    button.setAttribute("aria-checked", String(color.id === state.selectedColorId));
+    button.innerHTML = `
+      <span class="chip-swatch" style="background:${color.value}"></span>
+      <span>${color.name}</span>
+    `;
+    button.addEventListener("click", () => {
+      state.selectedColorId = color.id;
+      renderColorOptions();
+      render();
+    });
+
+    if (color.id === state.selectedColorId) {
+      button.classList.add("is-selected");
+    }
+
+    colorOptions.appendChild(button);
+  });
+}
+
+function renderShortcutButtons() {
+  shortcutButtons.innerHTML = "";
+
+  SHORTCUTS.forEach(([line1, line2, line3]) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "shortcut-button";
+    button.textContent = [line1, line2, line3].filter(Boolean).join(" / ");
+    button.addEventListener("click", () => {
+      line1Input.value = line1;
+      line2Input.value = line2;
+      line3Input.value = line3;
+      render();
+    });
+    shortcutButtons.appendChild(button);
+  });
+}
+
+function handleFormChange(event) {
+  if (event.target === quantityInput) {
+    const safeValue = clampNumber(quantityInput.value, 1, 100);
+    quantityInput.value = String(safeValue);
+  }
+
+  render();
+}
+
+function handleClear() {
+  line1Input.value = "";
+  line2Input.value = "";
+  line3Input.value = "";
+  line1Input.focus();
+  render();
+}
+
+async function handlePdfExport() {
+  const originalLabel = pdfButton.textContent;
+  const defaultAssistText = getAssistMessage(getFormData().paperType);
+  const previewWindow = window.open("", "_blank");
+
+  if (previewWindow && !previewWindow.closed) {
+    previewWindow.document.open();
+    previewWindow.document.write(`<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8"><title>PDFを準備中</title><style>body{margin:0;font-family:"Yu Gothic UI","Meiryo",sans-serif;background:#f6f0e7;color:#2d241a;display:grid;place-items:center;min-height:100vh}div{padding:24px 28px;border-radius:20px;background:#fffaf5;box-shadow:0 18px 36px rgba(73,51,29,.12);font-weight:700}</style></head><body><div>PDFを準備しているよ...</div></body></html>`);
+    previewWindow.document.close();
+  }
+
+  try {
+    pdfButton.disabled = true;
+    pdfButton.textContent = "PDFを書き出し中...";
+    assistText.textContent = "PDFを作っているよ。少し待ってね。";
+
+    const data = getFormData();
+    const pdfBlob = await buildPdfBlob(data);
+    const fileName = buildPdfFileName(data);
+    openPdfPreview(pdfBlob, fileName, previewWindow);
+    assistText.textContent = "PDFを開いたよ。表示された画面から保存できるよ。";
+  } catch (error) {
+    console.error(error);
+    if (previewWindow && !previewWindow.closed) {
+      previewWindow.close();
+    }
+    assistText.textContent = "PDFの書き出しに失敗したよ。もう一度試してみてね。";
+  } finally {
+    pdfButton.disabled = false;
+    pdfButton.textContent = originalLabel;
+    window.setTimeout(() => {
+      assistText.textContent = getAssistMessage(getFormData().paperType) || defaultAssistText;
+    }, 2600);
+  }
+}
+
+function setBorderEnabled(enabled) {
+  borderEnabledInput.checked = enabled;
+  syncBorderButtons();
+  render();
+}
+
+function syncBorderButtons() {
+  const enabled = borderEnabledInput.checked;
+  borderOnButton.classList.toggle("is-selected", enabled);
+  borderOffButton.classList.toggle("is-selected", !enabled);
+  borderOnButton.setAttribute("aria-pressed", String(enabled));
+  borderOffButton.setAttribute("aria-pressed", String(!enabled));
+}
+
+async function buildPdfBlob(data) {
+  const totalPages = Math.ceil(data.quantity / MAX_LABELS_PER_PAGE);
+  const jpegPages = [];
+
+  for (let pageIndex = 0; pageIndex < totalPages; pageIndex += 1) {
+    const remaining = data.quantity - pageIndex * MAX_LABELS_PER_PAGE;
+    const labelCount = Math.min(remaining, MAX_LABELS_PER_PAGE);
+    const canvas = renderPageToCanvas(data, labelCount, PDF_RENDER_DPI);
+    jpegPages.push(extractJpegBytes(canvas.toDataURL("image/jpeg", PDF_IMAGE_QUALITY)));
+  }
+
+  return createPdfFromJpegs(jpegPages, PDF_RENDER_DPI);
+}
+
+function renderPageToCanvas(data, labelCount, dpi = PDF_RENDER_DPI) {
+  const mmToPx = dpi / 25.4;
+  const pageWidthPx = Math.round(210 * mmToPx);
+  const pageHeightPx = Math.round(297 * mmToPx);
+  const canvas = document.createElement("canvas");
+  canvas.width = pageWidthPx;
+  canvas.height = pageHeightPx;
+
+  const ctx = canvas.getContext("2d");
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, pageWidthPx, pageHeightPx);
+
+  const labelWidth = 86.4 * mmToPx;
+  const labelHeight = 50.8 * mmToPx;
+  const marginLeft = 18.6 * mmToPx;
+  const marginTop = 21.2 * mmToPx;
+  const radius = 3 * mmToPx;
+  const borderWidth = 1.2 * mmToPx;
+
+  for (let slot = 0; slot < MAX_LABELS_PER_PAGE; slot += 1) {
+    const col = slot % 2;
+    const row = Math.floor(slot / 2);
+    const x = marginLeft + col * labelWidth;
+    const y = marginTop + row * labelHeight;
+    const filled = slot < labelCount;
+
+    drawRoundedRect(ctx, x, y, labelWidth, labelHeight, radius);
+    ctx.fillStyle = filled ? data.color.value : "#ffffff";
+    ctx.fill();
+
+    if (data.paperType === "plain" && filled) {
+      drawPlainPaperPattern(ctx, x, y, labelWidth, labelHeight, radius);
+    }
+
+    if (data.borderEnabled || data.paperType === "plain") {
+      drawRoundedRect(ctx, x, y, labelWidth, labelHeight, radius);
+      ctx.lineWidth = borderWidth;
+      ctx.strokeStyle = "rgba(42, 34, 23, 0.75)";
+      ctx.stroke();
+    }
+
+    drawLabelText(ctx, data, filled, x, y, labelWidth, labelHeight, dpi);
+  }
+
+  return canvas;
+}
+
+function drawRoundedRect(ctx, x, y, width, height, radius) {
+  ctx.beginPath();
+  ctx.moveTo(x + radius, y);
+  ctx.arcTo(x + width, y, x + width, y + height, radius);
+  ctx.arcTo(x + width, y + height, x, y + height, radius);
+  ctx.arcTo(x, y + height, x, y, radius);
+  ctx.arcTo(x, y, x + width, y, radius);
+  ctx.closePath();
+}
+
+function drawPlainPaperPattern(ctx, x, y, width, height, radius) {
+  ctx.save();
+  drawRoundedRect(ctx, x, y, width, height, radius);
+  ctx.clip();
+  ctx.strokeStyle = "rgba(93, 76, 58, 0.08)";
+  ctx.lineWidth = 1;
+
+  for (let offset = -height; offset < width + height; offset += 14) {
+    ctx.beginPath();
+    ctx.moveTo(x + offset, y);
+    ctx.lineTo(x + offset + height, y + height);
+    ctx.stroke();
+  }
+
+  for (let offset = 0; offset < width + height; offset += 14) {
+    ctx.beginPath();
+    ctx.moveTo(x + offset, y + height);
+    ctx.lineTo(x + offset - height, y);
+    ctx.stroke();
+  }
+
+  ctx.restore();
+}
+
+function drawLabelText(ctx, data, filled, x, y, width, height, dpi) {
+  const line1 = filled ? (data.line1 || "仕分けシール") : "";
+  const line2 = filled ? (data.line2 || "") : "";
+  const line3 = filled ? (data.line3 || "") : "";
+
+  if (!line1 && !line2 && !line3) {
+    return;
+  }
+
+  const fontPreset = {
+    large: { lineOnePt: 22, lineTwoPt: 19.2, lineThreePt: 11.8 },
+    medium: { lineOnePt: 19.5, lineTwoPt: 17.1, lineThreePt: 10.6 },
+    small: { lineOnePt: 17, lineTwoPt: 14.8, lineThreePt: 9.6 }
+  }[data.fontSize];
+  const fontFamily = '"Yu Gothic UI","Hiragino Kaku Gothic ProN","Meiryo",sans-serif';
+  const fallback = filled && !data.line1 && !data.line2 && !data.line3;
+  const lineDefinitions = [
+    {
+      text: line1,
+      weight: 900,
+      sizePx: ptToPx(fontPreset.lineOnePt, dpi),
+      color: fallback ? "rgba(70, 60, 48, 0.34)" : "#1f1a13",
+      maxWidth: width - 18,
+      letterSpacing: 0
+    },
+    line2 ? {
+      text: line2,
+      weight: 800,
+      sizePx: ptToPx(fontPreset.lineTwoPt, dpi),
+      color: "#1f1a13",
+      maxWidth: width - 18,
+      letterSpacing: 0
+    } : null,
+    line3 ? {
+      text: line3,
+      weight: 800,
+      sizePx: ptToPx(fontPreset.lineThreePt, dpi),
+      color: "#1f1a13",
+      maxWidth: width - 20,
+      letterSpacing: ptToPx(0.32, dpi)
+    } : null
+  ].filter(Boolean);
+
+  const fittedLines = lineDefinitions.map((line) => ({
+    ...line,
+    sizePx: fitCanvasFontSize(ctx, line.text, line.weight, line.sizePx, line.maxWidth, fontFamily, line.letterSpacing)
+  }));
+
+  const centerX = x + width / 2;
+  ctx.textBaseline = "alphabetic";
+  const baselineRatios = fittedLines.length === 3
+    ? [0.37, 0.59, 0.78]
+    : fittedLines.length === 2
+      ? [0.43, 0.65]
+      : [0.54];
+
+  fittedLines.forEach((line, index) => {
+    const baselineY = y + height * baselineRatios[index];
+    ctx.fillStyle = line.color;
+    ctx.font = `${line.weight} ${line.sizePx}px ${fontFamily}`;
+
+    if (line.letterSpacing > 0) {
+      drawCenteredSpacedText(ctx, line.text, centerX, baselineY, line.letterSpacing);
+    } else {
+      ctx.textAlign = "center";
+      ctx.fillText(line.text, centerX, baselineY);
+    }
+  });
+}
+
+function ptToPx(pt, dpi) {
+  return pt * (dpi / 72);
+}
+
+function fitCanvasFontSize(ctx, text, weight, baseSizePx, maxWidth, fontFamily, letterSpacing) {
+  let sizePx = baseSizePx;
+
+  while (sizePx > 9) {
+    ctx.font = `${weight} ${sizePx}px ${fontFamily}`;
+    const width = measureCanvasTextWidth(ctx, text, letterSpacing);
+
+    if (width <= maxWidth) {
+      return sizePx;
+    }
+
+    sizePx -= 0.5;
+  }
+
+  return sizePx;
+}
+
+function measureCanvasTextWidth(ctx, text, letterSpacing) {
+  if (!letterSpacing) {
+    return ctx.measureText(text).width;
+  }
+
+  return Array.from(text).reduce((sum, char, index, chars) => {
+    return sum + ctx.measureText(char).width + (index < chars.length - 1 ? letterSpacing : 0);
+  }, 0);
+}
+
+function drawCenteredSpacedText(ctx, text, centerX, baselineY, letterSpacing) {
+  const characters = Array.from(text);
+  const totalWidth = measureCanvasTextWidth(ctx, text, letterSpacing);
+  let cursorX = centerX - totalWidth / 2;
+
+  characters.forEach((char, index) => {
+    ctx.fillText(char, cursorX, baselineY);
+    cursorX += ctx.measureText(char).width + (index < characters.length - 1 ? letterSpacing : 0);
+  });
+}
+
+function extractJpegBytes(dataUrl) {
+  const base64 = dataUrl.split(",")[1];
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+
+  for (let index = 0; index < binary.length; index += 1) {
+    bytes[index] = binary.charCodeAt(index);
+  }
+
+  return bytes;
+}
+
+function createPdfFromJpegs(jpegPages, dpi) {
+  const pageWidthPt = mmToPt(210);
+  const pageHeightPt = mmToPt(297);
+  const imageWidthPx = Math.round(210 * dpi / 25.4);
+  const imageHeightPx = Math.round(297 * dpi / 25.4);
+  const textEncoder = new TextEncoder();
+  const objects = [];
+  const catalogObjectNumber = 1;
+  const pagesObjectNumber = 2;
+  const pageObjectNumbers = [];
+  let nextObjectNumber = 3;
+
+  jpegPages.forEach((jpegBytes, pageIndex) => {
+    const imageObjectNumber = nextObjectNumber;
+    const contentObjectNumber = nextObjectNumber + 1;
+    const pageObjectNumber = nextObjectNumber + 2;
+    nextObjectNumber += 3;
+    const imageName = `Im${pageIndex + 1}`;
+    const contentStream = `q\n${pageWidthPt.toFixed(2)} 0 0 ${pageHeightPt.toFixed(2)} 0 0 cm\n/${imageName} Do\nQ`;
+
+    objects[imageObjectNumber] = {
+      prefix: `<< /Type /XObject /Subtype /Image /Width ${imageWidthPx} /Height ${imageHeightPx} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${jpegBytes.length} >>\nstream\n`,
+      binary: jpegBytes,
+      suffix: "\nendstream"
+    };
+
+    objects[contentObjectNumber] = {
+      text: `<< /Length ${textEncoder.encode(contentStream).length} >>\nstream\n${contentStream}\nendstream`
+    };
+
+    objects[pageObjectNumber] = {
+      text: `<< /Type /Page /Parent ${pagesObjectNumber} 0 R /MediaBox [0 0 ${pageWidthPt.toFixed(2)} ${pageHeightPt.toFixed(2)}] /Resources << /XObject << /${imageName} ${imageObjectNumber} 0 R >> >> /Contents ${contentObjectNumber} 0 R >>`
+    };
+
+    pageObjectNumbers.push(pageObjectNumber);
+  });
+
+  objects[catalogObjectNumber] = {
+    text: `<< /Type /Catalog /Pages ${pagesObjectNumber} 0 R >>`
+  };
+  objects[pagesObjectNumber] = {
+    text: `<< /Type /Pages /Kids [${pageObjectNumbers.map((number) => `${number} 0 R`).join(" ")}] /Count ${pageObjectNumbers.length} >>`
+  };
+
+  const chunks = [];
+  const offsets = [];
+  let position = 0;
+
+  pushBytes(new Uint8Array([37, 80, 68, 70, 45, 49, 46, 52, 10, 37, 255, 255, 255, 255, 10]));
+
+  for (let objectNumber = 1; objectNumber < objects.length; objectNumber += 1) {
+    const object = objects[objectNumber];
+    offsets[objectNumber] = position;
+    pushString(`${objectNumber} 0 obj\n`);
+
+    if (object.text) {
+      pushString(`${object.text}\n`);
+    } else {
+      pushString(object.prefix);
+      pushBytes(object.binary);
+      pushString(`${object.suffix}\n`);
+    }
+
+    pushString("endobj\n");
+  }
+
+  const xrefOffset = position;
+  pushString(`xref\n0 ${objects.length}\n`);
+  pushString("0000000000 65535 f \n");
+
+  for (let objectNumber = 1; objectNumber < objects.length; objectNumber += 1) {
+    pushString(`${String(offsets[objectNumber]).padStart(10, "0")} 00000 n \n`);
+  }
+
+  pushString(`trailer\n<< /Size ${objects.length} /Root ${catalogObjectNumber} 0 R >>\nstartxref\n${xrefOffset}\n%%EOF`);
+
+  return new Blob(chunks, { type: "application/pdf" });
+
+  function pushString(value) {
+    pushBytes(textEncoder.encode(value));
+  }
+
+  function pushBytes(bytes) {
+    chunks.push(bytes);
+    position += bytes.length;
+  }
+}
+
+function mmToPt(mm) {
+  return mm * 72 / 25.4;
+}
+
+function openPdfPreview(blob, fileName, previewWindow) {
+  const url = URL.createObjectURL(blob);
+
+  if (previewWindow && !previewWindow.closed) {
+    previewWindow.document.open();
+    previewWindow.document.write(`<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8"><title>${escapeHtml(fileName)}</title><style>html,body{margin:0;height:100%;background:#ede6db;font-family:"Yu Gothic UI","Meiryo",sans-serif}header{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:12px 16px;background:#8b562d;color:#fffaf5}header strong{font-size:14px}header a{display:inline-flex;align-items:center;min-height:40px;padding:0 14px;border-radius:12px;background:#fff3e6;color:#4c220a;text-decoration:none;font-weight:800}iframe{width:100%;height:calc(100% - 64px);border:0;background:#fff}</style></head><body><header><strong>${escapeHtml(fileName)}</strong><a href="${url}" download="${escapeHtml(fileName)}">保存する</a></header><iframe src="${url}" title="PDFプレビュー"></iframe></body></html>`);
+    previewWindow.document.close();
+  } else {
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.target = "_blank";
+    anchor.rel = "noopener";
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+  }
+}
+
+function escapeHtml(value) {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function buildPdfFileName(data) {
+  const baseName = [data.line1, data.line2, data.line3].filter(Boolean).join("_") || "仕分けシール";
+  const safeName = baseName.replace(/[\\/:*?"<>|]/g, "_");
+  const now = new Date();
+  const stamp = [
+    now.getFullYear(),
+    String(now.getMonth() + 1).padStart(2, "0"),
+    String(now.getDate()).padStart(2, "0"),
+    String(now.getHours()).padStart(2, "0"),
+    String(now.getMinutes()).padStart(2, "0")
+  ].join("");
+  return `${safeName}_${stamp}.pdf`;
+}
+
+function getFormData() {
+  return {
+    line1: line1Input.value.trim(),
+    line2: line2Input.value.trim(),
+    line3: line3Input.value.trim(),
+    quantity: clampNumber(quantityInput.value, 1, 100),
+    fontSize: fontSizeInput.value,
+    paperType: paperTypeInput.value,
+    borderEnabled: borderEnabledInput.checked,
+    color: COLORS.find((entry) => entry.id === state.selectedColorId) ?? COLORS[0]
+  };
+}
+
+function render() {
+  const data = getFormData();
+  const pageCount = Math.ceil(data.quantity / MAX_LABELS_PER_PAGE);
+  const firstPageCount = Math.min(data.quantity, MAX_LABELS_PER_PAGE);
+
+  screenPreview.innerHTML = "";
+  printPages.innerHTML = "";
+
+  screenPreview.appendChild(createCanvasSheet(data, firstPageCount));
+
+  pageSummary.textContent = pageCount === 1
+    ? `${data.quantity}枚を1ページに並べるよ。`
+    : `${data.quantity}枚なので${pageCount}ページに分けるよ。画面では1ページ目を見せているよ。`;
+
+  paperBadge.textContent = data.paperType === "aone"
+    ? "A-ONE 78210 10面ラベル"
+    : "普通紙テスト印刷";
+
+  assistText.textContent = getAssistMessage(data.paperType);
+}
+
+function createCanvasSheet(data, labelCount) {
+  const sheet = document.createElement("article");
+  sheet.className = "sheet canvas-sheet";
+  const canvas = renderPageToCanvas(data, labelCount);
+  sheet.appendChild(canvas);
+  return sheet;
+}
+
+function getAssistMessage(paperType) {
+  return paperType === "aone"
+    ? "PDFを書き出して、そのまま保存できるよ。A-ONE 品番 78210 の台紙にも合わせてあるよ。"
+    : "まず普通紙で位置合わせを確認してから、PDF保存に進めるよ。";
+}
+
+function handleBeforePrint() {
+  renderPrintPages(getFormData());
+}
+
+function handleAfterPrint() {
+  printPages.innerHTML = "";
+}
+
+function renderPrintPages(data) {
+  const pageCount = Math.ceil(data.quantity / MAX_LABELS_PER_PAGE);
+  printPages.innerHTML = "";
+
+  for (let pageIndex = 0; pageIndex < pageCount; pageIndex += 1) {
+    const remaining = data.quantity - pageIndex * MAX_LABELS_PER_PAGE;
+    const labelCount = Math.min(remaining, MAX_LABELS_PER_PAGE);
+    printPages.appendChild(createCanvasSheet(data, labelCount));
+  }
+}
+
+function clampNumber(value, min, max) {
+  const parsed = Number.parseInt(value, 10);
+
+  if (Number.isNaN(parsed)) {
+    return min;
+  }
+
+  return Math.min(max, Math.max(min, parsed));
+}
+
+init();
+  </script>
+</body>
+</html>
