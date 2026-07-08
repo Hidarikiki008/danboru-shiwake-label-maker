@@ -149,6 +149,13 @@ select {
   font-weight: 700;
 }
 
+.field-help {
+  margin: -2px 0 0;
+  font-size: 0.84rem;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
 .field input[type="text"],
 .field input[type="number"],
 .field select {
@@ -240,6 +247,79 @@ select {
   background: linear-gradient(180deg, rgba(252, 247, 239, 0.96), rgba(245, 238, 228, 0.92));
 }
 
+.adjustment-box {
+  padding: 18px;
+  border-radius: 22px;
+  background: linear-gradient(180deg, rgba(246, 242, 235, 0.98), rgba(239, 232, 221, 0.94));
+  border: 1px solid rgba(115, 96, 74, 0.12);
+}
+
+.adjustment-box.is-company-preset {
+  border-color: rgba(204, 95, 47, 0.42);
+  background: linear-gradient(180deg, rgba(255, 244, 231, 0.98), rgba(248, 233, 213, 0.96));
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.45), 0 14px 28px rgba(204, 95, 47, 0.08);
+}
+
+.adjustment-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 12px;
+}
+
+.adjustment-meta {
+  display: grid;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.preset-button {
+  min-height: 46px;
+  padding: 10px 16px;
+  border-radius: 14px;
+  background: #fff7ef;
+  color: #6a3215;
+  font-weight: 800;
+  border: 1px solid rgba(204, 95, 47, 0.18);
+  box-shadow: 0 8px 18px rgba(119, 66, 27, 0.08);
+  cursor: pointer;
+  transition: transform 0.16s ease, opacity 0.16s ease, box-shadow 0.16s ease;
+}
+
+.preset-button.is-active {
+  background: linear-gradient(180deg, #fff1dd, #ffc985);
+  color: #5a2508;
+  box-shadow: 0 14px 26px rgba(204, 95, 47, 0.18);
+}
+
+.preset-button.is-active::before {
+  content: "適用中";
+  display: inline-block;
+  margin-right: 8px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.72);
+  font-size: 0.76rem;
+  vertical-align: middle;
+}
+
+.preset-status {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  background: rgba(109, 92, 75, 0.12);
+  color: #5e5247;
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.preset-status.is-active {
+  background: rgba(204, 95, 47, 0.14);
+  color: #8a3d18;
+}
+
 .shortcut-header {
   display: flex;
   justify-content: space-between;
@@ -272,6 +352,10 @@ select {
 .subtle-button:hover,
 .primary-button:hover,
 .clear-text-button:hover {
+  transform: translateY(-1px);
+}
+
+.preset-button:hover {
   transform: translateY(-1px);
 }
 
@@ -523,7 +607,8 @@ select {
   }
 
   .two-columns,
-  .color-options {
+  .color-options,
+  .adjustment-grid {
     grid-template-columns: 1fr;
   }
 
@@ -643,6 +728,43 @@ select {
             </div>
           </div>
 
+          <section id="adjustmentBox" class="adjustment-box" aria-labelledby="adjustment-title">
+            <div class="shortcut-header">
+              <h3 id="adjustment-title">印刷補正</h3>
+              <button id="companyPresetButton" class="preset-button" type="button" aria-pressed="false">会社ならここ</button>
+            </div>
+            <div class="adjustment-meta">
+              <p class="field-help">会社のプリンターなら、このボタンを押すだけでいつもの補正値が入るよ。</p>
+              <span id="companyPresetStatus" class="preset-status">いまは標準の補正だよ</span>
+              <p class="field-help">位置補正は -5.0 〜 5.0mm、ピッチ補正は -1.0 〜 1.0mm で入れられるよ。</p>
+            </div>
+            <div class="adjustment-grid">
+              <label class="field">
+                <span>横位置補正 mm</span>
+                <input id="offsetX" name="offsetX" type="number" min="-5" max="5" step="0.1" value="0" inputmode="decimal">
+                <p class="field-help">プラスで右、マイナスで左へ動くよ。</p>
+              </label>
+
+              <label class="field">
+                <span>縦位置補正 mm</span>
+                <input id="offsetY" name="offsetY" type="number" min="-5" max="5" step="0.1" value="0" inputmode="decimal">
+                <p class="field-help">プラスで下、マイナスで上へ動くよ。</p>
+              </label>
+
+              <label class="field">
+                <span>列の間隔補正 mm</span>
+                <input id="pitchX" name="pitchX" type="number" min="-1" max="1" step="0.1" value="0" inputmode="decimal">
+                <p class="field-help">プラスで左右の列間隔が広がるよ。</p>
+              </label>
+
+              <label class="field">
+                <span>段の間隔補正 mm</span>
+                <input id="pitchY" name="pitchY" type="number" min="-1" max="1" step="0.1" value="0" inputmode="decimal">
+                <p class="field-help">プラスで上下の段間隔が広がるよ。</p>
+              </label>
+            </div>
+          </section>
+
           <section class="shortcut-box" aria-labelledby="shortcut-title">
             <div class="shortcut-header">
               <h3 id="shortcut-title">よく使う文言</h3>
@@ -693,6 +815,18 @@ const SHORTCUTS = [
 const MAX_LABELS_PER_PAGE = 10;
 const PDF_RENDER_DPI = 300;
 const PDF_IMAGE_QUALITY = 0.98;
+const STANDARD_PRESET = {
+  offsetX: 0,
+  offsetY: 0,
+  pitchX: 0,
+  pitchY: 0
+};
+const COMPANY_PRESET = {
+  offsetX: -1.5,
+  offsetY: -4.0,
+  pitchX: 0.6,
+  pitchY: 0.3
+};
 
 const state = {
   selectedColorId: COLORS[0].id
@@ -705,11 +839,18 @@ const line3Input = document.getElementById("line3");
 const quantityInput = document.getElementById("quantity");
 const fontSizeInput = document.getElementById("fontSize");
 const paperTypeInput = document.getElementById("paperType");
+const offsetXInput = document.getElementById("offsetX");
+const offsetYInput = document.getElementById("offsetY");
+const pitchXInput = document.getElementById("pitchX");
+const pitchYInput = document.getElementById("pitchY");
 const borderEnabledInput = document.getElementById("borderEnabled");
 const borderOnButton = document.getElementById("borderOnButton");
 const borderOffButton = document.getElementById("borderOffButton");
 const colorOptions = document.getElementById("colorOptions");
 const shortcutButtons = document.getElementById("shortcutButtons");
+const adjustmentBox = document.getElementById("adjustmentBox");
+const companyPresetButton = document.getElementById("companyPresetButton");
+const companyPresetStatus = document.getElementById("companyPresetStatus");
 const clearButton = document.getElementById("clearButton");
 const pdfButton = document.getElementById("pdfButton");
 const screenPreview = document.getElementById("screenPreview");
@@ -726,6 +867,7 @@ function init() {
   window.addEventListener("beforeprint", handleBeforePrint);
   window.addEventListener("afterprint", handleAfterPrint);
   clearButton.addEventListener("click", handleClear);
+  companyPresetButton.addEventListener("click", applyCompanyPreset);
   pdfButton.addEventListener("click", handlePdfExport);
   borderOnButton.addEventListener("click", () => setBorderEnabled(true));
   borderOffButton.addEventListener("click", () => setBorderEnabled(false));
@@ -785,6 +927,22 @@ function handleFormChange(event) {
     quantityInput.value = String(safeValue);
   }
 
+  if (event.type === "change" && event.target === offsetXInput) {
+    normalizeDecimalInput(offsetXInput, -5, 5);
+  }
+
+  if (event.type === "change" && event.target === offsetYInput) {
+    normalizeDecimalInput(offsetYInput, -5, 5);
+  }
+
+  if (event.type === "change" && event.target === pitchXInput) {
+    normalizeDecimalInput(pitchXInput, -1, 1);
+  }
+
+  if (event.type === "change" && event.target === pitchYInput) {
+    normalizeDecimalInput(pitchYInput, -1, 1);
+  }
+
   render();
 }
 
@@ -794,6 +952,33 @@ function handleClear() {
   line3Input.value = "";
   line1Input.focus();
   render();
+}
+
+function applyCompanyPreset() {
+  const nextPreset = isCompanyPresetActive() ? STANDARD_PRESET : COMPANY_PRESET;
+  offsetXInput.value = nextPreset.offsetX.toFixed(1);
+  offsetYInput.value = nextPreset.offsetY.toFixed(1);
+  pitchXInput.value = nextPreset.pitchX.toFixed(1);
+  pitchYInput.value = nextPreset.pitchY.toFixed(1);
+  render();
+}
+
+function isCompanyPresetActive() {
+  return parseDecimalInput(offsetXInput.value, -5, 5) === COMPANY_PRESET.offsetX
+    && parseDecimalInput(offsetYInput.value, -5, 5) === COMPANY_PRESET.offsetY
+    && parseDecimalInput(pitchXInput.value, -1, 1) === COMPANY_PRESET.pitchX
+    && parseDecimalInput(pitchYInput.value, -1, 1) === COMPANY_PRESET.pitchY;
+}
+
+function syncCompanyPresetState() {
+  const active = isCompanyPresetActive();
+  adjustmentBox.classList.toggle("is-company-preset", active);
+  companyPresetButton.classList.toggle("is-active", active);
+  companyPresetButton.setAttribute("aria-pressed", String(active));
+  companyPresetStatus.classList.toggle("is-active", active);
+  companyPresetStatus.textContent = active
+    ? "会社用プリセットを使用中だよ。もう一度押すと標準に戻るよ"
+    : "いまは標準の補正だよ";
 }
 
 async function handlePdfExport() {
@@ -878,12 +1063,16 @@ function renderPageToCanvas(data, labelCount, dpi = PDF_RENDER_DPI) {
   const marginTop = 21.2 * mmToPx;
   const radius = 3 * mmToPx;
   const borderWidth = 1.2 * mmToPx;
+  const offsetXPx = data.offsetX * mmToPx;
+  const offsetYPx = data.offsetY * mmToPx;
+  const pitchXPx = data.pitchX * mmToPx;
+  const pitchYPx = data.pitchY * mmToPx;
 
   for (let slot = 0; slot < MAX_LABELS_PER_PAGE; slot += 1) {
     const col = slot % 2;
     const row = Math.floor(slot / 2);
-    const x = marginLeft + col * labelWidth;
-    const y = marginTop + row * labelHeight;
+    const x = marginLeft + offsetXPx + col * (labelWidth + pitchXPx);
+    const y = marginTop + offsetYPx + row * (labelHeight + pitchYPx);
     const filled = slot < labelCount;
 
     drawRoundedRect(ctx, x, y, labelWidth, labelHeight, radius);
@@ -1205,6 +1394,10 @@ function getFormData() {
     quantity: clampNumber(quantityInput.value, 1, 100),
     fontSize: fontSizeInput.value,
     paperType: paperTypeInput.value,
+    offsetX: parseDecimalInput(offsetXInput.value, -5, 5),
+    offsetY: parseDecimalInput(offsetYInput.value, -5, 5),
+    pitchX: parseDecimalInput(pitchXInput.value, -1, 1),
+    pitchY: parseDecimalInput(pitchYInput.value, -1, 1),
     borderEnabled: borderEnabledInput.checked,
     color: COLORS.find((entry) => entry.id === state.selectedColorId) ?? COLORS[0]
   };
@@ -1229,6 +1422,7 @@ function render() {
     : "普通紙テスト印刷";
 
   assistText.textContent = getAssistMessage(data.paperType);
+  syncCompanyPresetState();
 }
 
 function createCanvasSheet(data, labelCount) {
@@ -1272,6 +1466,25 @@ function clampNumber(value, min, max) {
   }
 
   return Math.min(max, Math.max(min, parsed));
+}
+
+function parseDecimalInput(value, min, max) {
+  const parsed = Number.parseFloat(value);
+
+  if (Number.isNaN(parsed)) {
+    return 0;
+  }
+
+  return Math.min(max, Math.max(min, Math.round(parsed * 10) / 10));
+}
+
+function normalizeDecimalInput(input, min, max) {
+  if (input.value.trim() === "") {
+    return;
+  }
+
+  const safeValue = parseDecimalInput(input.value, min, max);
+  input.value = safeValue.toFixed(1);
 }
 
 init();
